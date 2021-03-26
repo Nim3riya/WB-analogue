@@ -22,17 +22,17 @@ buttonCart.addEventListener('click', openModal);
 
 modalCart.addEventListener('click', (e) => {
     const target = e.target;
-if (target.classList.contains('overlay') || target.classList.contains('modal-close')) {
-    closeModal()
-}
+    if (target.classList.contains('overlay') || target.classList.contains('modal-close')) {
+        closeModal()
+    }
 });
-
+// scroll smooth
 {
     const scrollLinks = document.querySelectorAll('a.scroll-link');
-    for (let i = 0; i < scrollLinks.length; i++) {
-        scrollLinks[i].addEventListener('click', (e) => {
+    for (const scrollLink of scrollLinks) {
+        scrollLink.addEventListener('click', (e) => {
             e.preventDefault();
-            const id = scrollLinks[i].getAttribute('href')
+            const id = scrollLink.getAttribute('href')
             document.querySelector(id).scrollIntoView({
                 behavior: 'smooth',
                 block: 'start'
@@ -40,4 +40,89 @@ if (target.classList.contains('overlay') || target.classList.contains('modal-clo
         })
     }
 }
+// goods
 
+const viewAll = document.querySelectorAll('.view-all');
+const navigationLink = document.querySelectorAll('.navigation-link:not(.view-all)');
+const longGoodsList = document.querySelector('.long-goods-list');
+const showAcsessories = document.querySelectorAll('.show-acsessories');
+const showClothing = document.querySelectorAll('.show-clothing');
+
+const getGoods = async () => {
+  const result = await fetch('db/db.json');
+  if (!result.ok) {
+      throw 'Error:' + result.status
+  } 
+  return await result.json();
+};
+
+getGoods().then( (data) => {
+});
+
+const createCard = ({label, img, name, description, id, price}) => {
+const card = document.createElement('div');
+card.className = 'col-lg-3 col-sm-6';
+
+card.innerHTML = 
+            `<div class="goods-card">
+                ${label ? 
+                    `<span class="label">${label}</span>`: ''}
+                <img src="db/${img}" alt="${name}" class="goods-image">
+                <h3 class="goods-title">${name}</h3>
+                <p class="goods-description">${description}</p>
+                <button class="button goods-card-btn add-to-cart" data-id=${id}>
+                    <span class="button-price">${price}</span>
+                </button>
+            </div>`;
+return card
+};
+
+const renderCards = (data) => {
+    longGoodsList.textContent = '';
+    const cards = data.map(createCard)
+    longGoodsList.append(...cards);
+    document.body.classList.add('show-goods')
+};
+
+const showAll = (e) => {
+    e.preventDefault;
+    getGoods().then(renderCards)
+};
+
+viewAll.forEach( (elem) => {
+    elem.addEventListener('click', showAll)
+});
+
+const filterCards = (field, value) => {
+    getGoods()
+    .then( (data) => {
+        return data.filter((good) => {
+            return good[field] === value
+        })
+    })
+    .then(renderCards);
+};
+
+navigationLink.forEach( (link) => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const field = link.dataset.field;
+        const value = link.textContent
+        filterCards(field, value)
+    })
+
+});
+
+showAcsessories.forEach((item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        filterCards('category', 'Accessories')
+    })
+}));
+
+showClothing.forEach((item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        filterCards('category', 'Clothing')
+    })
+}))
